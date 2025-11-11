@@ -22,7 +22,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/flytedesk/pack_api"
   spec.metadata["changelog_uri"] = "https://github.com/flytedesk/pack_api/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
@@ -37,18 +36,16 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "activerecord", "~> 7.0"
-  spec.add_dependency "brotli", "~> 0.5"
-  spec.add_dependency "dry-types", "~> 1.8"
-  spec.add_dependency "dry-struct", "~> 1.6"
+  spec.add_runtime_dependency "activerecord", ">= 7.0", "< 9.0"
+  spec.add_runtime_dependency "brotli", "~> 0.5"
+  spec.add_runtime_dependency "dry-types", ">= 1.8", "< 2.0"
+  spec.add_runtime_dependency "dry-struct", ">= 1.6", "< 2.0"
 
   # Development dependencies
-  spec.add_development_dependency "rspec", "~> 3.12"
+  spec.add_development_dependency "rspec", ">= 3.12", "< 4.0"
   spec.add_development_dependency "rspec-collection_matchers", "~> 1.2"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "sqlite3", "~> 1.4"
-  spec.add_development_dependency "activesupport", "~> 7.0"
-  spec.add_development_dependency "activemodel", "~> 7.0"
+  spec.add_development_dependency "sqlite3", ">= 1.4", "< 2.0"
   spec.add_development_dependency "rack", "~> 2.0"
-  spec.add_development_dependency "rails", "~> 7.0" # For ActiveStorage in tests
+  spec.add_development_dependency "rails", ">= 7.0", "< 9.0"
 end
