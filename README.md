@@ -228,6 +228,55 @@ def query_blog_posts(cursor = nil, search = nil, sort = nil, page_size = 50, fil
 end
 ```
 
+## Testing with Shared Examples
+
+PackAPI includes RSpec shared examples to help test your API query methods. These are opt-in and only need to be loaded if you're using RSpec.
+
+### Loading Shared Examples
+
+In your `spec_helper.rb` or `rails_helper.rb`, require the shared examples you need:
+
+```ruby
+# Load all shared examples
+require 'pack_api/rspec/shared_examples_for_api_query_methods'
+require 'pack_api/rspec/shared_examples_for_paginated_results'
+
+# Or load them individually as needed
+require 'pack_api/rspec/shared_examples_for_api_query_methods'
+```
+
+### Using the Shared Examples
+
+**Testing API Query Methods:**
+
+```ruby
+RSpec.describe 'query_blog_posts' do
+  let(:api_query_method) { method(:query_blog_posts) }
+  let(:resources) { BlogPost.all }
+
+  it_behaves_like 'an API query method'
+
+  # With custom options
+  it_behaves_like 'an API query method',
+    model_id_attribute: :uuid,
+    supports_search: true do
+    let(:search_terms) { "searchable text" }
+    let(:matched_resources) { BlogPost.where("title LIKE ?", "%searchable%") }
+  end
+end
+```
+
+**Testing Paginated Methods:**
+
+```ruby
+RSpec.describe 'paginated query' do
+  let(:paginated_api_query_method) { method(:query_blog_posts) }
+  let(:paginated_resources) { BlogPost.all }
+
+  it_behaves_like 'a paginated API method', model_id_attribute: :external_id
+end
+```
+
 ## Development
 
 After checking out the repo, run:

@@ -26,9 +26,7 @@ Gem::Specification.new do |spec|
     "lib/**/*.rb",
     "LICENSE.txt",
     "README.md",
-    "CHANGELOG.md",
-    'spec/support/shared_examples/shared_examples_for_api_query_methods.rb',
-    'spec/support/shared_examples/shared_examples_for_paginated_results.rb'
+    "CHANGELOG.md"
   ]
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
