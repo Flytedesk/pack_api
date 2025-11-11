@@ -10,12 +10,9 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Building blocks for implementing APIs around domain models"
   spec.description = <<~DESC
-    Building blocks used to implement an API around a domain pack. Includes:
-    - elements for passing data out of the API
-    - elements for describing the filters supported by query endpoints in the API
-    - elements for building the mapping between domain models and API models
-    - elements for building the query endpoints themselves, based on user inputs (sort, filter, pagination)
-    - elements for retrieving multiple pages of data from other query endpoints
+    Building blocks used to implement an API around a domain pack. Includes tools for data transformation, 
+    discoverable filters, building ActiveRecord queries from API arguments, breaking query results across pages, and
+    fetching data from API endpoints.
   DESC
   spec.homepage = "https://github.com/flytedesk/pack_api"
   spec.license = "MIT"
