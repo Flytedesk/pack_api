@@ -12,6 +12,18 @@ PackAPI provides a comprehensive set of tools for building robust API layers on 
 - **Query building** - Elements for building query endpoints based on user inputs (sort, filter, pagination)
 - **Batch operations** - Elements for retrieving multiple pages of data from other query endpoints
 
+## Motivation
+
+Separation of concerns and information hiding within the module. 
+
+In order to separate the public interface from the (private) implementation of our subsystems (modules), we needed to 
+create an API that did not depend on our ActiveRecord models. We chose to implement this separation using value objects
+(built using dry-types, but could have been built using Ruby Data type). Beyond the API methods, the public interface
+definition is then captured in the explicit attribute list of these value objects.
+
+However, building the mapping between the domain models and the API value objects can be tedious and error-prone. We
+created this gem to provide reusable building blocks to make this mapping easier to define and maintain.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -55,11 +67,11 @@ The mapping module provides tools for transforming data between domain models an
 Build flexible query interfaces with support for filtering, sorting, and pagination:
 
 - `ComposableQuery` - Build complex queries from simpler components
-- `CollectionQuery` - Query collections with filtering and sorting
+- `CollectionQuery` - Query ActiveRecord collections based on arguments for pagination, filtering and sorting
 - `AbstractFilter` - Base class for custom filters
-- Filter implementations for boolean, enum, numeric, and range filters
 - `FilterFactory` - Create filters dynamically based on query method arguments
 - `SortHash` - Handle sorting parameters
+- Base class filter implementations for boolean, enum, numeric, and range filters
 
 ### Pagination
 
@@ -67,16 +79,15 @@ Enable paginated access to resources across the API:
 
 - `Paginator` - Standard pagination implementation
 - `PaginatorBuilder` - Build paginators with custom configurations
-- `SnapshotPaginator` - Enable record iteration (one by one) across results in a page, 
-even when the underlying records change state (and may no longer be at the same position in the result set)
+- `SnapshotPaginator` - Enable record iteration (one by one) across results in a page, even when the underlying records change state (and may no longer be at the same position in the result set)
 
 ### Types
 
 Type definitions and validation using dry-types:
 
-- `BaseType` - Base type for API models
+- `BaseType` - Base type for value objects
 - `CollectionResultMetadata` - Metadata for paginated collections
-- `Result` - Generic result type
+- `Result` - Generic result type to be returned from your API methods
 - `AggregateType` - Composite types made of attributes from other types
 - Filter definition types for various data types
 
@@ -174,7 +185,9 @@ end
 
 ```
 
-3. Implement a query endpoint using the attribute map:
+3. Implement filters. 
+
+4. Implement a query endpoint using the attribute map:
 
 ```ruby
 def query_blog_posts(cursor = nil, search = nil, sort = nil, page_size = 50, filters = {}, optional_attributes = [])
