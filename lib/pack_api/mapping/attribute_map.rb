@@ -26,8 +26,6 @@
 #       associate the error with the "user_id" attribute (not the "user" attribute).
 module PackAPI::Mapping
   class AttributeMap
-    FROZEN_EMPTY_HASH = {}.freeze
-
     attr_reader :config, :options
 
     class << self
@@ -225,25 +223,36 @@ module PackAPI::Mapping
       end
 
       def call(attribute_map, attribute_value)
-        proc ?
-          attribute_map.instance_exec(attribute_value, **@kwargs, &proc) :
-          attribute_map.send(instance_method.name, attribute_value, **@kwargs)
+        if @kwargs
+          proc ?
+            attribute_map.instance_exec(attribute_value, **@kwargs, &proc) :
+            attribute_map.send(instance_method.name, attribute_value, **@kwargs)
+        else
+          proc ?
+            attribute_map.instance_exec(attribute_value, &proc) :
+            attribute_map.send(instance_method.name, attribute_value)
+        end
       end
 
       def kwargs=(new_kwargs)
-        @kwargs = supported_kwargs(new_kwargs)
+        @kwargs = new_kwargs == DEFAULT_OPTIONS || new_kwargs.blank? ?
+                    nil :
+                  supported_kwargs(new_kwargs)
       end
 
       private
 
       def supported_kwargs(kwargs)
-        return FROZEN_EMPTY_HASH if kwargs.blank?
+        return if parameters.empty?
 
-        kwargs.select { |kwarg| parameters.any? { |parameter| parameter.last == kwarg } }
+        overlap = parameters.any? { |p| kwargs.key?(p) }
+        return unless overlap
+
+        kwargs.slice(*parameters)
       end
 
       def parameters
-        @parameters ||= (proc || instance_method).parameters
+        @parameters ||= (proc || instance_method).parameters.map(&:last)
       end
     end
 

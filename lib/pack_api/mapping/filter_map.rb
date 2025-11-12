@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 module PackAPI::Mapping
-  FROZEN_EMPTY_ARRAY = [].freeze
-  FROZEN_EMPTY_HASH = {}.freeze
-
   ##
   # This class is responsible for transforming API filter names into model filters. It also produces filter definitions
   # in API terms for those filters that are supported by the model.
@@ -43,7 +40,7 @@ module PackAPI::Mapping
 
     def api_attribute_filter_names
       @api_attribute_filter_names ||= attribute_map_class.nil? ?
-                                        FROZEN_EMPTY_ARRAY :
+                                        PackAPI::FrozenEmpty::ARRAY :
                                         attribute_map_class.api_type.filterable_attributes.keys
     end
 
@@ -51,7 +48,7 @@ module PackAPI::Mapping
     # Map from a backend filter name to an API filter name for default attribute filters.
     def api_attribute_filter_name_map
       return @api_attribute_filter_name_map if defined?(@api_attribute_filter_name_map)
-      return FROZEN_EMPTY_HASH if attribute_map_class.nil?
+      return PackAPI::FrozenEmpty::HASH if attribute_map_class.nil?
 
       names = {}
       api_attribute_filter_names.each { |name| names[name] = name }

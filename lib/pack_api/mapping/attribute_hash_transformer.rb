@@ -9,7 +9,6 @@ module PackAPI::Mapping
   # Converts model attributes to API attributes
   # Converts API attributes to model attributes
   class AttributeHashTransformer < AbstractTransformer
-
     def execute
       options.fetch(:contains_model_attributes, true) ?
         model_attributes_to_api_attributes :

@@ -2,8 +2,6 @@
 
 module PackAPI::Querying
   module DynamicEnumFilter
-    FROZEN_EMPTY_ARRAY = [].freeze
-
     extend ActiveSupport::Concern
     class_methods do
       def type = :dynamic_enum
@@ -14,7 +12,7 @@ module PackAPI::Querying
 
       private
 
-      def filter_options(**) = FROZEN_EMPTY_ARRAY
+      def filter_options(**) = PackAPI::FrozenEmpty::ARRAY
     end
   end
 end

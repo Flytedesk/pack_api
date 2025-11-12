@@ -10,7 +10,7 @@ module PackAPI::Mapping
       @api_type = config[:api_type]
       @model_type = config[:model_type]
       @transform_value = config[:transform_value]
-      @options = {}
+      @options = PackAPI::FrozenEmpty::HASH
     end
 
     ###
@@ -20,7 +20,7 @@ module PackAPI::Mapping
     end
 
     def options=(value)
-      @options = value.presence || {}
+      @options = value.presence || PackAPI::FrozenEmpty::HASH
     end
 
     protected
@@ -30,8 +30,10 @@ module PackAPI::Mapping
     end
 
     def model_attribute(api_attribute)
+      # support _destroy and other special attributes used by Rails
       return api_attribute if api_attribute.start_with?('_')
 
+      # prevent api_attributes from being used unless they are in the public type definition
       unless mappings.key?(api_attribute)
         raise ActiveModel::UnknownAttributeError.new(@model_type.name, api_attribute)
       end
