@@ -2,7 +2,6 @@
 
 module PackAPI::Mapping
   class ValueObjectFactory
-
     class << self
       attr_reader :attribute_map_registry, :value_object_attributes
 

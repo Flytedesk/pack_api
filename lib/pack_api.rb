@@ -9,6 +9,7 @@ require_relative "types"
 require_relative "pack_api/version"
 
 module PackAPI
+  autoload :FrozenEmpty, "pack_api/frozen_empty"
   autoload :InternalError, "pack_api/internal_error"
   autoload :ValuesInBatches, "pack_api/values_in_batches"
   autoload :ValuesInBackgroundBatches, "pack_api/values_in_background_batches"

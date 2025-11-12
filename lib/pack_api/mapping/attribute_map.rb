@@ -26,8 +26,6 @@
 #       associate the error with the "user_id" attribute (not the "user" attribute).
 module PackAPI::Mapping
   class AttributeMap
-    FROZEN_EMPTY_HASH = {}.freeze
-
     attr_reader :config, :options
 
     class << self
@@ -237,7 +235,7 @@ module PackAPI::Mapping
       private
 
       def supported_kwargs(kwargs)
-        return FROZEN_EMPTY_HASH if kwargs.blank?
+        return PackAPI::FrozenEmpty::HASH if kwargs.blank?
 
         kwargs.select { |kwarg| parameters.any? { |parameter| parameter.last == kwarg } }
       end
