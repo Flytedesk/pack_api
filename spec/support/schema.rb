@@ -39,6 +39,8 @@ ActiveRecord::Schema.define do
     t.float :earnings
     t.text :tags
     t.belongs_to :author
+    t.date :drafted_on
+    t.date :published_on
   end
 
   create_table :comments do |t|
