@@ -109,9 +109,19 @@ module PackAPI::Querying
     end
 
     def apply_filters(filters:)
-      filtered_query = ComposableQuery.new(@query)
-      filter_factory.create_filters(filters).each { |filter| filter.apply_to(filtered_query) }
+      filter_objects = filter_factory.create_filters(filters)
+      validate_filters(filter_objects)
+      filtered_query = filter_objects.each_with_object(ComposableQuery.new(@query)) do |filter, composable_query|
+        filter.apply_to(composable_query)
+      end
       @query = filtered_query.build
+    end
+
+    def validate_filters(filter_objects)
+      errors = filter_objects.select { |filter| filter.respond_to?(:valid?) && !filter.valid? }
+                             .map { |invalid_filter| { invalid_filter.filter_name => invalid_filter.errors.messages } }
+                             .reduce({}, :merge)
+      raise PackAPI::InternalError.new(object: errors) if errors.present?
     end
 
     def stable_sort(sort)

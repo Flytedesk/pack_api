@@ -4,90 +4,74 @@ require 'spec_helper'
 
 module PackAPI::Querying
   RSpec.describe CollectionQuery, type: :model do
-    let!(:test_model) do
-      Class.new(ActiveRecord::Base) do
-        self.table_name = 'test_models'
-      end
-    end
-
-    before(:all) do
-      ActiveRecord::Base.connection.create_table :test_models do |t|
-        t.bigint :integer_field
-        t.string :string_field
-        t.date :start_date_field
-        t.date :end_date_field
-      end
-    end
-
-    after(:all) do
-      ActiveRecord::Base.connection.drop_table :test_models
+    let(:query) do
+      query = described_class.new(collection: BlogPost.all)
+      query.filter_factory = Filters::BlogPost::FilterFactory.new
+      query
     end
 
     describe '#call' do
-      let(:query) { described_class.new(collection: test_model.all) }
       let!(:record_one) do
-        start_date = Date.current
-        end_date = start_date + 2.days
-        test_model.create(id: 1,
-                          integer_field: 1,
-                          string_field: 'test1',
-                          start_date_field: start_date,
-                          end_date_field: end_date)
+        BlogPost.create!(id: 1,
+                         earnings: 1,
+                         title: 'test1',
+                         drafted_on: Date.current,
+                         published_on: Date.current + 2.days)
       end
+
       let!(:record_two) do
-        start_date = Date.current + 1.day
-        end_date = start_date + 2.days
-        test_model.create(id: 2,
-                          integer_field: 2,
-                          string_field: 'test2',
-                          start_date_field: start_date,
-                          end_date_field: end_date)
+        BlogPost.create!(id: 2,
+                         earnings: 2,
+                         title: 'test2',
+                         drafted_on: Date.current + 1.day,
+                         published_on: Date.current + 3.days)
       end
 
       context 'with default filters' do
         it 'supports hash conditions' do
           # when
-          query.call(filters: { string_field: 'test2' })
+          query.call(filters: { title: 'test2' })
           # then
           expect(query.results.count).to eq(1)
         end
 
         it 'supports array conditions' do
           # when
-          query.call(filters: ['string_field = ?', 'test2'])
+          query.call(filters: ['title = ?', 'test2'])
           # then
           expect(query.results.count).to eq(1)
         end
 
         it 'supports string conditions' do
           # when
-          query.call(filters: "string_field = 'test2'")
+          query.call(filters: "title = 'test2'")
           # then
           expect(query.results.count).to eq(1)
         end
       end
 
       context 'with custom filters' do
-        it 'supports arbitrarily complex conditions given a hash input' do
+        it 'supports complex conditions given a hash input' do
           # given
-          test_filter_klass = Class.new(AbstractFilter) do
-            def initialize(arguments) = @arguments = arguments # rubocop:disable Lint/MissingSuper
-            def present? = true
-            def apply_to(query) = query.add(query.build.where("string_field != '#{@arguments}'"))
-          end
-          query.filter_factory.register_filter(name: :test, klass: test_filter_klass)
+          record_one.create_author!(name: 'Foo')
+          record_one.save!
           # when
-          query.call(filters: { test: 'test2' })
+          query.call(filters: { author: { value: 'Foo' }})
           # then
           expect(query.results.count).to eq(1)
-          expect(query.results.first.string_field).to eq('test1')
+          expect(query.results.first.title).to eq('test1')
+        end
+
+        it 'detects invalid filters' do
+          # when
+          expect { query.call(filters: { invalid: { value: '123' } }) } .to raise_error(PackAPI::InternalError)
         end
       end
 
       context 'with searching' do
         it 'limits results to those matching the search terms' do
           # when
-          query.call(search: { string_field: '2' })
+          query.call(search: { title: '2' })
           # then
           expect(query.results.count).to eq(1)
         end
@@ -96,59 +80,59 @@ module PackAPI::Querying
       context 'with sorting' do
         it 'works with sort strings' do
           # when
-          query.call(sort: 'start_date_field DESC')
+          query.call(sort: 'drafted_on DESC')
           # then
-          expect(query.results.first.string_field).to eq('test2')
-          expect(query.results.second.string_field).to eq('test1')
+          expect(query.results.first.title).to eq('test2')
+          expect(query.results.second.title).to eq('test1')
         end
 
         it 'works with sort symbols' do
           # when
-          query.call(sort: :start_date_field) # assumes ASC
+          query.call(sort: :drafted_on) # assumes ASC
           # then
-          expect(query.results.first.string_field).to eq('test1')
-          expect(query.results.second.string_field).to eq('test2')
+          expect(query.results.first.title).to eq('test1')
+          expect(query.results.second.title).to eq('test2')
         end
 
         it 'works with sort hashes' do
           # when
-          query.call(sort: { start_date_field: :desc })
+          query.call(sort: { drafted_on: :desc })
           # then
-          expect(query.results.first.string_field).to eq('test2')
-          expect(query.results.second.string_field).to eq('test1')
+          expect(query.results.first.title).to eq('test2')
+          expect(query.results.second.title).to eq('test1')
         end
 
         it 'works with sort Arel' do
           # when
-          query.call(sort: Arel.sql('start_date_field DESC'))
+          query.call(sort: Arel.sql('drafted_on DESC'))
           # then
-          expect(query.results.first.string_field).to eq('test2')
-          expect(query.results.second.string_field).to eq('test1')
+          expect(query.results.first.title).to eq('test2')
+          expect(query.results.second.title).to eq('test1')
         end
 
         context 'with default_sort' do
-          let(:query) { described_class.new(collection: test_model.all, default_sort: 'start_date_field desc') }
+          let(:query) { described_class.new(collection: BlogPost.all, default_sort: 'drafted_on desc') }
 
           it 'uses the default sort if query-specific sort is not provided' do
             # when
             query.call
             # then
-            expect(query.results.first.string_field).to eq('test2')
-            expect(query.results.second.string_field).to eq('test1')
+            expect(query.results.first.title).to eq('test2')
+            expect(query.results.second.title).to eq('test1')
           end
 
           it 'overrides the default sort if query-specific sort is provided' do
             # when
-            query.call(sort: 'start_date_field DESC')
+            query.call(sort: 'drafted_on DESC')
             # then
-            expect(query.results.second.string_field).to eq('test1')
-            expect(query.results.first.string_field).to eq('test2')
+            expect(query.results.second.title).to eq('test1')
+            expect(query.results.first.title).to eq('test2')
           end
         end
 
         it 'ensures a stable sort order' do
           # when
-          query.call(sort: { start_date_field: :desc })
+          query.call(sort: { drafted_on: :desc })
           # then
           expect(query.paginator.sort).to have_key(:id)
         end
@@ -177,7 +161,7 @@ module PackAPI::Querying
 
         it 'preserves the custom sort to subsequent pages' do
           # given
-          query.call(per_page: 1, sort: 'string_field DESC')
+          query.call(per_page: 1, sort: 'title DESC')
           paginator = query.paginator
           query.reset
           # when
@@ -188,22 +172,22 @@ module PackAPI::Querying
 
         it 'resets to page 1 when a NEW sort is given' do
           # given
-          query.call(per_page: 1, sort: 'string_field DESC')
+          query.call(per_page: 1, sort: 'title DESC')
           paginator = query.paginator
           query.reset
           # when
-          query.call(cursor: paginator.next_page_cursor, sort: 'string_field ASC')
+          query.call(cursor: paginator.next_page_cursor, sort: 'title ASC')
           # then
           expect(query.paginator.item_range).to eq(1..1)
         end
 
         it 'preserves the custom sort to subsequent pages when the sort is specified, but is not different' do
           # given
-          query.call(per_page: 1, sort: 'string_field DESC')
+          query.call(per_page: 1, sort: 'title DESC')
           paginator = query.paginator
           query.reset
           # when
-          query.call(cursor: paginator.next_page_cursor, sort: 'string_field DESC')
+          query.call(cursor: paginator.next_page_cursor, sort: 'title DESC')
           # then
           expect(query.paginator.item_range).to eq(2..2)
         end
@@ -222,16 +206,14 @@ module PackAPI::Querying
       end
 
       context 'with current_page_snapshot_cursor' do
-        let(:filters) { { integer_field: [1, 2, 3] } }
-        let(:sort) { 'start_date_field DESC' } # expect records in order: 3, 2, 1
+        let(:filters) { { earnings: [1, 2, 3] } }
+        let(:sort) { 'drafted_on DESC' } # expect records in order: 3, 2, 1
         let!(:record_three) do
-          start_date = Date.current + 2.days
-          end_date = start_date + 2.days
-          test_model.create(id: 3,
-                            integer_field: 3,
-                            string_field: 'test3',
-                            start_date_field: start_date,
-                            end_date_field: end_date)
+          BlogPost.create!(id: 3,
+                           earnings: 3,
+                           title: 'test3',
+                           drafted_on: Date.current + 2.days,
+                           published_on: Date.current + 4.days)
         end
         let!(:current_page_snapshot_cursor) do
           query.call(filters:, sort:)
@@ -240,15 +222,15 @@ module PackAPI::Querying
 
         before :each do
           # move record three out of position #1 in the sorted recordset
-          record_three.update(start_date_field: Date.current - 1.day)
+          record_three.update(drafted_on: Date.current - 1.day)
           # remove record one from the recordset (based on filters)
-          record_one.update(integer_field: 100)
+          record_one.update(earnings: 100)
           # add record four to the start of the sorted recordset
-          test_model.create(id: 4,
-                            integer_field: 1,
-                            string_field: 'test4',
-                            start_date_field: Date.current + 3.days,
-                            end_date_field: Date.current + 5.days)
+          BlogPost.create!(id: 4,
+                           earnings: 1,
+                           title: 'test4',
+                           drafted_on: Date.current + 3.days,
+                           published_on: Date.current + 5.days)
           query.reset
         end
 
@@ -392,11 +374,11 @@ module PackAPI::Querying
       context 'with pagination cursor and search' do
         it 'overrides the search used in the cursor query' do
           # given
-          query.call(per_page: 1, search: { string_field: '2' })
+          query.call(per_page: 1, search: { title: '2' })
           paginator = query.paginator
           query.reset
           # when
-          query.call(cursor: paginator.current_page_cursor, search: { string_field: 'test' })
+          query.call(cursor: paginator.current_page_cursor, search: { title: 'test' })
           # then
           expect(query.paginator.total_items).to eq(2)
         end
