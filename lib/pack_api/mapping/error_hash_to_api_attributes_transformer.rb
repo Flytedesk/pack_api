@@ -68,6 +68,10 @@ module PackAPI::Mapping
       collection_associations.include?(model_attribute)
     end
 
+    def accepts_nested_attributes_for?(association_name)
+      model_type.nested_attributes_options.key?(association_name)
+    end
+
     def resource_associations
       @resource_associations ||= model_type.reflect_on_all_associations
                                            .reject(&:collection?)
@@ -81,7 +85,9 @@ module PackAPI::Mapping
     end
 
     def normalize_association_reference(api_attribute, model_attribute)
-      if resource_association?(model_attribute)
+      if accepts_nested_attributes_for?(model_attribute)
+        api_attribute
+      elsif resource_association?(model_attribute)
         normalize_resource_association_reference(api_attribute)
       elsif collection_association?(model_attribute)
         normalize_collection_association_reference(api_attribute)

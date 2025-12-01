@@ -287,7 +287,7 @@ module PackAPI::Mapping
         end
       end
 
-      context 'with attributes mapped to a singular model association (eg belongs_to)' do
+      context 'with attributes mapped to an associated resource' do
         it 'contains API attributes' do
           # given
           blog_post.errors.add(:author, 'is required')
@@ -298,14 +298,27 @@ module PackAPI::Mapping
         end
       end
 
-      context 'with attributes mapped to a plural model association (eg HABTM)' do
+      context 'with attributes mapped to an associated collection' do
+        let(:attribute_map) { AuthorAttributeMap.new(author.errors) }
+
+        it 'contains API attributes' do
+          # given
+          author.errors.add(:blog_posts, 'too many')
+          # when
+          result = attribute_map.attributes
+          # then
+          expect(result).to include(:blog_post_ids)
+        end
+      end
+
+      context 'with attributes mapped to an associated collection (accepts_nested_attributes_for)' do
         it 'contains API attributes' do
           # given
           blog_post.errors.add(:comments, 'is required')
           # when
           result = attribute_map.attributes
           # then
-          expect(result).to include(:note_ids)
+          expect(result).to include(:notes)
         end
       end
 
