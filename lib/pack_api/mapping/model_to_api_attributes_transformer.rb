@@ -9,6 +9,7 @@ module PackAPI::Mapping
       super
       @optional_attributes_to_include = nil
       @model_attributes_of_interest = nil
+      @api_attributes_of_interest = nil
     end
 
     def execute
@@ -23,12 +24,20 @@ module PackAPI::Mapping
 
     protected
 
+    def api_attribute_names
+      api_attributes_of_interest || api_type.attribute_names
+    end
+
     def include_api_attribute?(api_attribute)
       !optional_api_attribute?(api_attribute) || include_optional_api_attribute?(api_attribute)
     end
 
     def model_attributes_of_interest
       @model_attributes_of_interest ||= options[:model_attributes_of_interest]
+    end
+
+    def api_attributes_of_interest
+      @api_attributes_of_interest ||= options[:api_attributes_of_interest]
     end
 
     def optional_attributes_to_include
@@ -40,6 +49,7 @@ module PackAPI::Mapping
     end
 
     def include_optional_api_attribute?(api_attribute_name)
+      return true if api_attributes_of_interest && api_attributes_of_interest.include?(api_attribute_name)
       return false if optional_attributes_to_include.nil?
       return false if optional_attributes_to_include.respond_to?(:exclude?) &&
                       optional_attributes_to_include.exclude?(api_attribute_name)
@@ -48,7 +58,7 @@ module PackAPI::Mapping
     end
 
     def include_model_attribute?(model_attribute)
-      return true if model_attributes_of_interest.blank?
+      return true if model_attributes_of_interest.nil?
 
       model_attributes_of_interest.include?(model_attribute)
     end

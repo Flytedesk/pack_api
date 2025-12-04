@@ -19,7 +19,8 @@ module PackAPI::Mapping
 
         it 'raises an error' do
           # when
-          expect { attribute_map.attributes }.to raise_error(ActiveModel::UnknownAttributeError)
+          expected_error_message = /unknown attribute 'foo' for BlogPost./
+          expect { attribute_map.attributes }.to raise_error(PackAPI::InternalError, expected_error_message)
         end
       end
 
@@ -229,6 +230,20 @@ module PackAPI::Mapping
         end
       end
 
+      context 'with api_attributes_of_interest' do
+        let(:options) { { api_attributes_of_interest: [:associated, :id] } }
+        let(:attribute_map) { BlogPostAttributeMap.new(blog_post, options) }
+
+        it 'contains only the specified attributes' do
+          # when
+          result = attribute_map.attributes
+          # then
+          expect(result).to have(2).items
+          expect(result).to include(:id)
+          expect(result).to include(:associated)
+        end
+      end
+
       context 'with multiple model value transformations' do
         it 'contains values transformed by multiple methods' do
           # given
@@ -242,6 +257,7 @@ module PackAPI::Mapping
           expect(result[:title]).to eq('** GNITSET **')
         end
       end
+
     end
 
     context 'from error hash to API attributes' do
