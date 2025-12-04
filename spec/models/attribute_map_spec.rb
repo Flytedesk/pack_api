@@ -19,7 +19,8 @@ module PackAPI::Mapping
 
         it 'raises an error' do
           # when
-          expect { attribute_map.attributes }.to raise_error(ActiveModel::UnknownAttributeError)
+          expected_error_message = /unknown attribute 'foo' for BlogPost./
+          expect { attribute_map.attributes }.to raise_error(PackAPI::InternalError, expected_error_message)
         end
       end
 

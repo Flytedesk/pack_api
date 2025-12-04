@@ -35,7 +35,7 @@ module PackAPI::Mapping
 
       # prevent api_attributes from being used unless they are in the public type definition
       unless mappings.key?(api_attribute)
-        raise ActiveModel::UnknownAttributeError.new(@model_type.name, api_attribute)
+        raise PackAPI::InternalError.new("unknown attribute '#{api_attribute}' for #{@model_type.name}.")
       end
 
       mappings[api_attribute]
