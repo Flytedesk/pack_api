@@ -87,9 +87,9 @@ module PackAPI::Mapping
     def normalize_association_reference(api_attribute, model_attribute)
       if accepts_nested_attributes_for?(model_attribute)
         api_attribute
-      elsif resource_association?(model_attribute)
+      elsif resource_association?(model_attribute) && !model_attribute.to_s.end_with?('_id')
         normalize_resource_association_reference(api_attribute)
-      elsif collection_association?(model_attribute)
+      elsif collection_association?(model_attribute) && !model_attribute.to_s.end_with?('_ids')
         normalize_collection_association_reference(api_attribute)
       else
         api_attribute
