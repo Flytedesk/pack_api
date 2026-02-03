@@ -3,10 +3,9 @@
 module PackAPI::Types
   class BaseType < Dry::Struct
     @optional_attributes = []
-    @filterable_attributes = {}
 
     def self.inherited(subclass)
-      subclass.instance_variable_set(:@optional_attributes, [])
+      subclass.instance_variable_set(:@optional_attributes, @optional_attributes.dup)
       super
     end
 
