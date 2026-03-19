@@ -12,11 +12,10 @@ jobs:
     strategy:
       matrix:
         ruby-version: ['3.4']
-        node-version: ['22']
 
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v6
+
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
