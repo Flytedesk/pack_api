@@ -6,8 +6,6 @@ module PackAPI::Querying
     class_methods do
       def type = :dynamic_enum
 
-      def can_exclude? = false
-
       def search_for_options(relation:, search:) = raise NotImplementedError
 
       private
