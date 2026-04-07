@@ -4,8 +4,12 @@ module PackAPI::Types
   class CollectionResultMetadata < Dry::Struct
     attribute :first_item, Types::Integer
     attribute :last_item, Types::Integer
-    attribute :per_page, Types::Integer
     attribute :total_items, Types::Integer
+
+    # the page size (input) -- can be different than actual number of items in the result for 2 reasons:
+    #  - single page scenario: per_page = :all (symbol)
+    #  - last page scenario: per_page = N (integer), but there are fewer than N items remaining in the result set
+    attribute :per_page, Types::Integer | Types::Symbol
 
     ###
     # Cursors for the current record set (see PackAPI::Paginator)
