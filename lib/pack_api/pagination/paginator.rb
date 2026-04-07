@@ -32,7 +32,6 @@ module PackAPI::Pagination
     attr_accessor :query, :sort, :total_items, :per_page, :offset, :metadata
 
     DEFAULT_PER_PAGE = 20
-    DEFAULT_SORT = 'id asc'
 
     ###
     # The range of items included in the results.

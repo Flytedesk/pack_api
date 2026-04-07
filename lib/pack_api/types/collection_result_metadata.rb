@@ -4,6 +4,7 @@ module PackAPI::Types
   class CollectionResultMetadata < Dry::Struct
     attribute :first_item, Types::Integer
     attribute :last_item, Types::Integer
+    attribute :per_page, Types::Integer
     attribute :total_items, Types::Integer
 
     ###
@@ -25,7 +26,8 @@ module PackAPI::Types
       new(
         first_item: 1,
         last_item: 1,
-        total_items: 1
+        total_items: 1,
+        per_page: 1
       )
     end
 
@@ -34,6 +36,7 @@ module PackAPI::Types
         first_item: paginator.item_range.begin,
         last_item: paginator.item_range.end,
         total_items: paginator.total_items,
+        per_page: paginator.per_page,
         next_page_cursor: paginator.next_page_cursor,
         previous_page_cursor: paginator.previous_page_cursor,
         current_page_cursor: paginator.current_page_cursor,

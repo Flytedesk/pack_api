@@ -25,6 +25,8 @@
 #
 module PackAPI::Pagination
   class PaginatorBuilder
+    DEFAULT_SORT = 'id asc'
+
     attr_accessor :paginator
 
     def self.build
@@ -65,7 +67,7 @@ module PackAPI::Pagination
         @recordset_changed = original_query.to_json != @paginator.query.to_json
       end
 
-      @paginator.sort ||= Paginator::DEFAULT_SORT
+      @paginator.sort ||= DEFAULT_SORT
       if sort.present?
         @recordset_changed = sort.to_json != @paginator.sort.to_json
         @paginator.sort = sort.presence
