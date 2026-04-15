@@ -1,8 +1,23 @@
-name: Release PR
+name: Release
+
+# Manual, one-shot gem release. Trigger from the Actions tab and enter
+# the new semver version (e.g. 1.0.15). The reusable workflow runs the
+# test suite, bumps lib/pack_api/version.rb + Gemfile.lock, commits to
+# main, tags v<version>, and creates a GitHub Release. The publish
+# workflow (publish.yml) then pushes the gem to RubyGems.
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "New version, e.g. 1.0.15"
+        required: true
+        type: string
 
 jobs:
-  release_pr:
-    uses: flytedesk/.github/.github/workflows/reusable-ruby-gem-release-pr.yml@main
+  release:
+    uses: flytedesk/.github/.github/workflows/reusable-ruby-gem-release.yml@main
+    with:
+      version: ${{ inputs.version }}
+      gem_name: pack_api
+    secrets: inherit
