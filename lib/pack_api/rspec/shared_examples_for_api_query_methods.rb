@@ -113,7 +113,7 @@ module PackAPI
       end
     end
 
-    it 'supports sorting by API attributes only' do
+    it 'supports sorting by API attributes only', if: options[:supports_sort] do
       resources.each_with_index { |resource, index| resource.update(model_id_attribute => format('%02d', index + 1)) }
       # when - sort by API attribute `id` in descending order
       results = api_query_method.call(sort: { id: :desc })
