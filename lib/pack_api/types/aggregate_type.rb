@@ -72,6 +72,8 @@ module PackAPI::Types
 
       def get(id)
         new(attribute_blender.get(id))
+      rescue PackAPI::InternalError, Dry::Struct::Error
+        nil
       end
 
       def update(id, params)
@@ -89,7 +91,7 @@ module PackAPI::Types
       private
 
       def attribute_blender
-        @attribute_blender ||= AttributeBlender.new(@attribute_sources, self)
+        AttributeBlender.new(@attribute_sources, self)
       end
     end
 
@@ -173,6 +175,7 @@ module PackAPI::Types
         rescue PackAPI::InternalError => e
           Rails.logger.error("Failed to delete #{resource_name} with id: #{id}")
           Rails.logger.error(e.backtrace.join("\n"))
+          raise
         end
       end
 
