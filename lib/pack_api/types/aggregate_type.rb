@@ -72,7 +72,7 @@ module PackAPI::Types
 
       def get(id)
         new(attribute_blender.get(id))
-      rescue PackAPI::InternalError, Dry::Struct::Error
+      rescue PackAPI::InternalError
         nil
       end
 
