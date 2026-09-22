@@ -8,8 +8,13 @@ module PackAPI::Querying
       @filter_classes = Hash.new { |_hash, key| raise NotImplementedError, "Unsupported filter #{key}" }
     end
 
-    def register_filter(name:, klass:)
-      filter_classes[name] = klass
+    def register_filter(filter_class = nil, name: nil, klass: filter_class)
+      filter_classes[name || klass.filter_name] = klass
+    end
+
+    # registers an AttributeFilter for each filterable attribute of the attribute map's api type
+    def register_attribute_filters(attribute_map_class)
+      AttributeFilterFactory.new(attribute_map_class).from_api_type { register_filter(it) }
     end
 
     def create_filters(filter_hash)

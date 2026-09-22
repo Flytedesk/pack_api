@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class BlogPostType < PackAPI::Types::BaseType
-  attribute :id, ::Types::String
+  attribute :id, ::Types::String.meta(filterable: true)
   attribute :legacy_id, ::Types::String
-  attribute :title, ::Types::String
+  attribute :title, ::Types::String.meta(filterable: true)
   attribute :persisted, ::Types::Bool
   attribute :contents, ::Types::String.optional
   optional_attribute :associated, ::AuthorType
