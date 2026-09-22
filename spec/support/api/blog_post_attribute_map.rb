@@ -4,7 +4,10 @@ class BlogPostAttributeMap < PackAPI::Mapping::AttributeMap
   api_type BlogPostType
   model_type BlogPost
 
-  # API attributes with the same name as the model attribute (title, legacy_id) need no map
+  # API attributes with the same name as the model attribute (title) need no map
+
+  # example of API attribute ending in "_id" (mapped explicitly for documentation; the default would be identical)
+  map :legacy_id
 
   map :contents, from_model_attribute: ->(attachment) { attachment&.blob }
 

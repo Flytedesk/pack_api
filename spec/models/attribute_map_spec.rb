@@ -22,7 +22,7 @@ module PackAPI::Mapping
         # when
         keys = BlogPostAttributeMap.config[:mappings].keys
         # then
-        expect(keys.first(2)).to eq([:contents, :id])
+        expect(keys.first(3)).to eq([:legacy_id, :contents, :id])
       end
     end
 
