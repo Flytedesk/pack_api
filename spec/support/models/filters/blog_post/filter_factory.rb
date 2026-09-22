@@ -6,11 +6,9 @@ module Filters
       def initialize
         super
         @use_default_filter = true
-        PackAPI::Querying::AttributeFilterFactory.new(BlogPostAttributeMap).from_api_type do |klass|
-          register_filter(name: klass.filter_name, klass:)
-        end
-        register_filter(name: AuthorFilter.filter_name, klass: AuthorFilter)
-        register_filter(name: InvalidFilter.filter_name, klass: InvalidFilter)
+        register_attribute_filters(BlogPostAttributeMap)
+        register_filter(AuthorFilter)
+        register_filter(InvalidFilter)
       end
     end
   end

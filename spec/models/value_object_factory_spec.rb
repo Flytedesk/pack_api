@@ -11,6 +11,23 @@ module PackAPI::Mapping
 
     let(:factory) { TestValueObjectFactory.new }
 
+    describe '.attribute_map_registry' do
+      it 'defaults to <Namespace>::AttributeMapRegistry by convention' do
+        # given
+        stub_const('Blogging::AttributeMapRegistry', Class.new(AttributeMapRegistry))
+        stub_const('Blogging::ValueObjectFactory', Class.new(described_class))
+        # when/then
+        expect(Blogging::ValueObjectFactory.attribute_map_registry).to eq(Blogging::AttributeMapRegistry)
+      end
+
+      it 'honors set_attribute_map_registry' do
+        # given
+        factory_class = Class.new(described_class) { set_attribute_map_registry(TestAttributeMapRegistry) }
+        # when/then
+        expect(factory_class.attribute_map_registry).to eq(TestAttributeMapRegistry)
+      end
+    end
+
     describe '#create_object' do
       it 'can create a value object from a model' do
         value_object = factory.create_object(model: blog_post)

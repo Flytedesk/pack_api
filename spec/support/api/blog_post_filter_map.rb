@@ -1,7 +1,4 @@
 # frozen_string_literal: true
 
-class BlogPostFilterMap < PackAPI::Mapping::FilterMap
-  def initialize
-    super(filter_factory: Filters::BlogPost::FilterFactory.new, attribute_map_class: BlogPostAttributeMap)
-  end
-end
+# filter factory and attribute map are resolved by naming convention (see PackAPI::Mapping::FilterMap)
+class BlogPostFilterMap < PackAPI::Mapping::FilterMap; end

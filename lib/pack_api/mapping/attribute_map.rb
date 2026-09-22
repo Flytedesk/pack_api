@@ -56,14 +56,24 @@ module PackAPI::Mapping
       end
 
       def config
+        mappings = identity_mappings.merge(@mappings || {})
         {
-          mappings: @mappings,
-          from_api_attributes: @from_api_attributes,
-          from_model_attributes: @from_model_attributes,
-          transform_nested_attributes_with: @transform_nested_attributes_with,
+          mappings:,
+          from_api_attributes: @from_api_attributes || {},
+          from_model_attributes: @from_model_attributes || {},
+          transform_nested_attributes_with: @transform_nested_attributes_with || {},
           api_type: @api_type,
           model_type: @model_type
         }
+      end
+
+      private
+
+      # every api type attribute maps to a model attribute of the same name
+      def identity_mappings
+        return {} unless @api_type
+
+        @api_type.attribute_names.index_with(&:itself)
       end
     end
 

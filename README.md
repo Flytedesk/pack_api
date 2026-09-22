@@ -57,7 +57,7 @@ gem install pack_api
 The mapping module provides tools for transforming data between domain models and API representations:
 
 - `AttributeMap` - Define bidirectional mappings between model and API attributes
-- `AttributeMapRegistry` - Centralized registry for attribute mappings
+- `AttributeMapRegistry` - Finds the attribute map for a model, by naming convention or explicit registration
 - `ModelToAPIAttributesTransformer` - Transform model attributes to API format
 - `APIToModelAttributesTransformer` - Transform API attributes to model format
 - `ValueObjectFactory` - Create value objects from raw data
@@ -141,9 +141,8 @@ end
 class AuthorAttributeMap < PackAPI::Mapping::AttributeMap
   api_type AuthorType
   model_type Author
-  map :name, to: :name
   map :id, to: :external_id
-  map :blog_posts
+  # name and blog_posts share their names with the model attributes, so they need no map
 end
 
 # api/comment_attribute_map.rb
@@ -158,16 +157,15 @@ class BlogPostAttributeMap < PackAPI::Mapping::AttributeMap
   api_type BlogPostType
   model_type BlogPost
 
-  # example API attribute mapped to a model attribute of the same name
-  map :title
+  # API attributes with the same name as the model attribute (title) need no map
+
+  # example of API attribute ending in "_id" (mapped explicitly for documentation; the default would be identical)
+  map :legacy_id
 
   map :contents, from_model_attribute: ->(attachment) { attachment&.blob }
 
   # example API attribute mapped to a model attribute of a different name
   map :id, to: :external_id
-
-  # example of API attribute ending in "_id"
-  map :legacy_id
 
   # example of API attribute mapped to a model method (unidirectional)
   map :persisted, to: :persisted?, readonly: true
@@ -185,7 +183,36 @@ end
 
 ```
 
-3. Implement filters. 
+3. Implement filters and register them in a filter factory. Attributes marked `filterable: true` on the value object
+   type get an `AttributeFilter` each via `register_attribute_filters`; anything else is a filter class of its own:
+
+```ruby
+# models/filters/blog_post/filter_factory.rb
+module Filters::BlogPost
+  class FilterFactory < PackAPI::Querying::FilterFactory
+    def initialize
+      super
+      register_attribute_filters(BlogPostAttributeMap)
+      register_filter(AuthorFilter) # keyed by AuthorFilter.filter_name
+    end
+  end
+end
+
+# api/blog_post_filter_map.rb
+# resolves Filters::BlogPost::FilterFactory and BlogPostAttributeMap from its own name
+class BlogPostFilterMap < PackAPI::Mapping::FilterMap; end
+```
+
+The registry and value object factory follow the same pattern, so they are usually empty classes too
+(see [Naming Conventions](#naming-conventions)):
+
+```ruby
+# api/attribute_map_registry.rb
+class AttributeMapRegistry < PackAPI::Mapping::AttributeMapRegistry; end
+
+# api/value_object_factory.rb
+class ValueObjectFactory < PackAPI::Mapping::ValueObjectFactory; end
+```
 
 4. Implement a query endpoint using the attribute map:
 
@@ -227,6 +254,35 @@ def query_blog_posts(cursor = nil, search = nil, sort = nil, page_size = 50, fil
                                          paginator: query.paginator)
 end
 ```
+
+## Naming Conventions
+
+PackAPI infers collaborators from class names so that the classes a pack needs are mostly declarations of intent
+with empty bodies. Every convention is a **default**, not a requirement: pass the argument or make the registration
+explicitly and the convention is never consulted. A project that names things differently keeps working unchanged.
+
+Given a pack namespace `Blogging` and a resource `Post`:
+
+| Class | Infers | Explicit alternative |
+|---|---|---|
+| `Blogging::PostFilterMap < Mapping::FilterMap` | `filter_factory` = `Blogging::Filters::Post::FilterFactory.new`<br>`attribute_map_class` = `Blogging::PostAttributeMap` (nil when absent) | `super(filter_factory: ..., attribute_map_class: ...)` in `initialize` |
+| `Blogging::AttributeMapRegistry < Mapping::AttributeMapRegistry` | attribute map for model `Blogging::Post` = `Blogging::PostAttributeMap`<br>nested models resolve to nested maps: `Blogging::Post::Draft` -> `Blogging::PostAttributeMap::Draft` | `register_attribute_map(SomeAttributeMap)`; an explicit registration always wins over the convention |
+| `Blogging::ValueObjectFactory < Mapping::ValueObjectFactory` | `attribute_map_registry` = `Blogging::AttributeMapRegistry` | `set_attribute_map_registry(SomeRegistry)` |
+| any `Mapping::AttributeMap` with an `api_type` | an identity mapping (`map :title`) for every attribute of the api type | `map :title, to: :headline` (or any other `map` option) overrides the identity mapping for that attribute |
+| `Querying::FilterFactory#register_filter(klass)` | filter name = `klass.filter_name` | `register_filter(klass, name: :other)` or `register_filter(name:, klass:)` |
+| `Querying::FilterFactory#register_attribute_filters(attribute_map_class)` | one `AttributeFilter` per attribute marked `filterable: true` on the api type | register attribute filters by hand |
+
+Notes:
+
+- The identity mapping has no opt-out because it never changes behaviour: an api attribute without a mapping was
+  already rejected as an `unknown attribute` on both read and write, so any working attribute map mapped every api
+  attribute explicitly. The default only fills those mandatory entries.
+- Several api attributes may map to one model attribute (a rename next to the identity mapping, e.g.
+  `map :filename, to: :file` beside `file`). A nested attribute error on that model attribute is reported on the
+  api attribute with the same name when there is one, otherwise on the first mapping declared for it.
+- Conventions resolve constants lazily, on first use, so autoloading (Zeitwerk) works without eager registration.
+- A namespace is the class name minus its last segment (`Blogging::PostFilterMap` -> `Blogging`). Top-level classes
+  resolve top-level collaborators (`PostFilterMap` -> `Filters::Post::FilterFactory`).
 
 ## Testing with Shared Examples
 

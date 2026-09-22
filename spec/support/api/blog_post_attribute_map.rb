@@ -4,16 +4,15 @@ class BlogPostAttributeMap < PackAPI::Mapping::AttributeMap
   api_type BlogPostType
   model_type BlogPost
 
-  # example API attribute mapped to a model attribute of the same name
-  map :title
+  # API attributes with the same name as the model attribute (title) need no map
+
+  # example of API attribute ending in "_id" (mapped explicitly for documentation; the default would be identical)
+  map :legacy_id
 
   map :contents, from_model_attribute: ->(attachment) { attachment&.blob }
 
   # example API attribute mapped to a model attribute of a different name
   map :id, to: :external_id
-
-  # example of API attribute ending in "_id"
-  map :legacy_id
 
   # example of API attribute mapped to a model method (unidirectional)
   map :persisted, to: :persisted?, readonly: true

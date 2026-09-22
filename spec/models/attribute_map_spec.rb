@@ -9,6 +9,15 @@ module PackAPI::Mapping
     let(:blog_post_contents) { Rack::Test::UploadedFile.new(blog_post_contents_file, 'text/plain') }
     let(:blog_post) { BlogPost.new(title: 'Testing', external_id: '1', earnings: 10.0, author:, contents: blog_post_contents) }
 
+    describe '.config' do
+      it 'maps every api type attribute to a model attribute of the same name unless mapped otherwise' do
+        # when
+        mappings = BlogPostAttributeMap.config[:mappings]
+        # then
+        expect(mappings).to include(title: :title, legacy_id: :legacy_id, id: :external_id)
+      end
+    end
+
     context 'from API attributes to model attributes' do
       let(:test_value) { 'Testing' }
       let(:input) { { api_attribute => test_value } }
@@ -359,6 +368,33 @@ module PackAPI::Mapping
           expect(result).to include('notes[0].text')
           expect(result['notes[0].text']).to eq(['is required'])
         end
+      end
+    end
+
+    context 'from nested error hash to API attributes' do
+      # several api attributes may target one model attribute (a rename plus the identity mapping);
+      # the error belongs to the identity attribute regardless of declaration order
+      it 'reports a nested error on the api attribute named like the model attribute' do
+        # given
+        note_type = Class.new(PackAPI::Types::BaseType) do
+          attribute :label, ::Types::String
+          attribute :txt, ::Types::String
+        end
+        note_map = Class.new(AttributeMap) do
+          api_type note_type
+          model_type Comment
+          map :label, to: :txt
+        end
+        post_map = Class.new(AttributeMap) do
+          api_type BlogPostType
+          model_type BlogPost
+          map :notes, to: :comments, transform_nested_attributes_with: note_map
+        end
+        blog_post.errors.add(:'comments[0].txt', 'is required')
+        # when
+        result = post_map.new(blog_post.errors).attributes
+        # then
+        expect(result).to have_key('notes[0].txt')
       end
     end
 

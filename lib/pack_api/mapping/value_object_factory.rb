@@ -3,16 +3,21 @@
 module PackAPI::Mapping
   class ValueObjectFactory
     class << self
-      attr_reader :attribute_map_registry, :value_object_attributes
+      # defaults to "<Namespace>::AttributeMapRegistry" for a factory named "<Namespace>::ValueObjectFactory"
+      def attribute_map_registry
+        @attribute_map_registry ||= "#{name.deconstantize}::AttributeMapRegistry".safe_constantize
+      end
 
       def set_attribute_map_registry(registry)
         @attribute_map_registry = registry
+      end
+
+      def value_object_attributes
         @value_object_attributes ||= {}
       end
 
       def model_attributes_containing_value_objects(*attributes, model_class:)
-        @value_object_attributes ||= {}
-        @value_object_attributes[model_class] = attributes
+        value_object_attributes[model_class] = attributes
       end
     end
 
