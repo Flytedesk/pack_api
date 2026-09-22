@@ -4,10 +4,13 @@ module PackAPI::Mapping
   ##
   # This class is responsible for transforming API filter names into model filters. It also produces filter definitions
   # in API terms for those filters that are supported by the model.
+  #
+  # A subclass named "<Namespace>::<Resource>FilterMap" resolves its collaborators by convention:
+  # "<Namespace>::Filters::<Resource>::FilterFactory" and "<Namespace>::<Resource>AttributeMap" (if it exists).
   class FilterMap
     attr_reader :filter_factory, :attribute_map_class
 
-    def initialize(filter_factory:, attribute_map_class: nil)
+    def initialize(filter_factory: default_filter_factory, attribute_map_class: default_attribute_map_class)
       @filter_factory = filter_factory
       @attribute_map_class = attribute_map_class
     end
@@ -28,6 +31,22 @@ module PackAPI::Mapping
     end
 
     private
+
+    def default_filter_factory
+      conventional_constant('Filters', resource_name, 'FilterFactory').constantize.new
+    end
+
+    def default_attribute_map_class
+      conventional_constant("#{resource_name}AttributeMap").safe_constantize
+    end
+
+    def conventional_constant(*segments)
+      [self.class.name.deconstantize.presence, *segments].compact.join('::')
+    end
+
+    def resource_name
+      self.class.name.demodulize.delete_suffix('FilterMap')
+    end
 
     def attribute_filter_definition(filter_name, filter_class)
       api_filter_name = api_attribute_filter_name_map[filter_name]
