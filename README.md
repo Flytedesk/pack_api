@@ -57,7 +57,7 @@ gem install pack_api
 The mapping module provides tools for transforming data between domain models and API representations:
 
 - `AttributeMap` - Define bidirectional mappings between model and API attributes
-- `AttributeMapRegistry` - Centralized registry for attribute mappings
+- `AttributeMapRegistry` - Finds the attribute map for a model, by naming convention or explicit registration
 - `ModelToAPIAttributesTransformer` - Transform model attributes to API format
 - `APIToModelAttributesTransformer` - Transform API attributes to model format
 - `ValueObjectFactory` - Create value objects from raw data
@@ -141,9 +141,8 @@ end
 class AuthorAttributeMap < PackAPI::Mapping::AttributeMap
   api_type AuthorType
   model_type Author
-  map :name, to: :name
   map :id, to: :external_id
-  map :blog_posts
+  # name and blog_posts share their names with the model attributes, so they need no map
 end
 
 # api/comment_attribute_map.rb
@@ -158,16 +157,12 @@ class BlogPostAttributeMap < PackAPI::Mapping::AttributeMap
   api_type BlogPostType
   model_type BlogPost
 
-  # example API attribute mapped to a model attribute of the same name
-  map :title
+  # API attributes with the same name as the model attribute (title, legacy_id) need no map
 
   map :contents, from_model_attribute: ->(attachment) { attachment&.blob }
 
   # example API attribute mapped to a model attribute of a different name
   map :id, to: :external_id
-
-  # example of API attribute ending in "_id"
-  map :legacy_id
 
   # example of API attribute mapped to a model method (unidirectional)
   map :persisted, to: :persisted?, readonly: true
@@ -185,7 +180,30 @@ end
 
 ```
 
-3. Implement filters. 
+3. Implement filters and register them in a filter factory. Attributes marked `filterable: true` on the value object
+   type get an `AttributeFilter` each via `register_attribute_filters`; anything else is a filter class of its own:
+
+```ruby
+# models/filters/blog_post/filter_factory.rb
+module Filters::BlogPost
+  class FilterFactory < PackAPI::Querying::FilterFactory
+    def initialize
+      super
+      register_attribute_filters(BlogPostAttributeMap)
+      register_filter(AuthorFilter) # keyed by AuthorFilter.filter_name
+    end
+  end
+end
+
+# api/blog_post_filter_map.rb
+# resolves Filters::BlogPost::FilterFactory and BlogPostAttributeMap from its own name
+class BlogPostFilterMap < PackAPI::Mapping::FilterMap; end
+```
+
+Everything a pack needs beyond that follows the same naming convention, so these classes are usually empty:
+`<Namespace>::AttributeMapRegistry` finds `<Namespace>::<Model>AttributeMap` (nested models resolve to nested maps,
+`Post::Draft` -> `PostAttributeMap::Draft`), and `<Namespace>::ValueObjectFactory` uses that registry. Use
+`register_attribute_map` and `set_attribute_map_registry` only for the exceptions.
 
 4. Implement a query endpoint using the attribute map:
 
