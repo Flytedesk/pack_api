@@ -57,13 +57,22 @@ module PackAPI::Mapping
 
       def config
         {
-          mappings: @mappings,
-          from_api_attributes: @from_api_attributes,
-          from_model_attributes: @from_model_attributes,
-          transform_nested_attributes_with: @transform_nested_attributes_with,
+          mappings: (@mappings || {}).merge(identity_mappings) { |_attr, explicit, _identity| explicit },
+          from_api_attributes: @from_api_attributes || {},
+          from_model_attributes: @from_model_attributes || {},
+          transform_nested_attributes_with: @transform_nested_attributes_with || {},
           api_type: @api_type,
           model_type: @model_type
         }
+      end
+
+      private
+
+      # every api type attribute maps to a model attribute of the same name unless `map` says otherwise
+      def identity_mappings
+        return {} unless @api_type
+
+        @api_type.attribute_names.index_with(&:itself)
       end
     end
 

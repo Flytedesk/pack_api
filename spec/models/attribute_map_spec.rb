@@ -9,6 +9,23 @@ module PackAPI::Mapping
     let(:blog_post_contents) { Rack::Test::UploadedFile.new(blog_post_contents_file, 'text/plain') }
     let(:blog_post) { BlogPost.new(title: 'Testing', external_id: '1', earnings: 10.0, author:, contents: blog_post_contents) }
 
+    describe '.config' do
+      it 'maps every api type attribute to a model attribute of the same name unless mapped otherwise' do
+        # when
+        mappings = BlogPostAttributeMap.config[:mappings]
+        # then
+        expect(mappings).to include(title: :title, legacy_id: :legacy_id, id: :external_id)
+      end
+
+      # reverse lookups (model attribute -> api attribute) take the first match, so declaration order must win
+      it 'lists explicitly mapped attributes before the identity defaults' do
+        # when
+        keys = BlogPostAttributeMap.config[:mappings].keys
+        # then
+        expect(keys.first(2)).to eq([:contents, :id])
+      end
+    end
+
     context 'from API attributes to model attributes' do
       let(:test_value) { 'Testing' }
       let(:input) { { api_attribute => test_value } }
