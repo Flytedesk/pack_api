@@ -35,11 +35,17 @@ module PackAPI::Mapping
         child_model_attribute = match_data[:child].to_sym
         child_api_attribute = child_model_attribute
         if child_attribute_map_class
-          mapping = child_attribute_map_class.config[:mappings].find { |_k, v| v == child_model_attribute }
-          child_api_attribute = mapping.first if mapping
+          child_api_attribute = api_attribute_for(child_attribute_map_class.config[:mappings], child_model_attribute)
         end
         "#{parent_api_attribute}[#{match_data[:index]}].#{child_api_attribute}"
       end
+    end
+
+    # several api attributes may map to one model attribute (e.g. a rename next to the identity mapping);
+    # the error belongs to the api attribute named like the model attribute when there is one
+    def api_attribute_for(mappings, model_attribute)
+      candidates = mappings.filter_map { |api_attribute, mapped| api_attribute if mapped == model_attribute }
+      candidates.find { |api_attribute| api_attribute == model_attribute } || candidates.first || model_attribute
     end
 
     def nested_attribute_error_key?(error_key)

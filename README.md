@@ -277,9 +277,9 @@ Notes:
 - The identity mapping has no opt-out because it never changes behaviour: an api attribute without a mapping was
   already rejected as an `unknown attribute` on both read and write, so any working attribute map mapped every api
   attribute explicitly. The default only fills those mandatory entries.
-- Explicitly declared `map` entries keep their declared position ahead of the identity defaults. Nested attribute
-  error keys are converted with a reverse lookup that takes the first mapping pointing at a model attribute, so
-  declaration order is significant when several api attributes map to the same model attribute.
+- Several api attributes may map to one model attribute (a rename next to the identity mapping, e.g.
+  `map :filename, to: :file` beside `file`). A nested attribute error on that model attribute is reported on the
+  api attribute with the same name when there is one, otherwise on the first mapping declared for it.
 - Conventions resolve constants lazily, on first use, so autoloading (Zeitwerk) works without eager registration.
 - A namespace is the class name minus its last segment (`Blogging::PostFilterMap` -> `Blogging`). Top-level classes
   resolve top-level collaborators (`PostFilterMap` -> `Filters::Post::FilterFactory`).
