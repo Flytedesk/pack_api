@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", ">= 3.12", "< 4.0"
   spec.add_development_dependency "rspec-collection_matchers", "~> 1.2"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "sqlite3", ">= 1.4", "< 2.0"
+  spec.add_development_dependency "sqlite3", ">= 1.4", "< 3.0"
   spec.add_development_dependency "rack", "~> 2.0"
   spec.add_development_dependency "rails", ">= 7.0", "< 9.0"
 end
